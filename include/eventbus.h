@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef EVENTBUS_H
 #define EVENTBUS_H
 
@@ -6,12 +8,15 @@
 
 typedef struct EventBus EventBus;
 
-// Створення та знищення EventBus
+// Створення EventBus
 EventBus *eventbus_create(void);
+
+// Знищення EventBus
 void eventbus_destroy(EventBus *bus);
 
-// Реєстрація/відписка підписників
+// Реєстрація підписників
 int eventbus_register(EventBus *bus, Subscriber *subscriber);
+
 int eventbus_unregister(EventBus *bus, Subscriber *subscriber);
 
 // Відправлення події
