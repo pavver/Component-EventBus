@@ -6,7 +6,31 @@
 #include <stdint.h>
 #include <stddef.h>
 
-typedef struct Event Event;
+typedef enum EventStatus : uint8_t
+{
+  /**
+   * @brief Очікує чергу на асинхронне виконання
+   */
+  EVENT_WAIT_QUEUE,
+
+  /**
+   * @brief Очікує виклик від підписника
+   */
+  EVENT_STATUS_WAIT_INVOKE,
+
+  /**
+   * @brief Подія в обробці підписником
+   */
+  EVENT_IN_WORK,
+
+  /**
+   * @brief Подія виконана, але подія є запитом і очікує обробки відповіді паблішером
+   */
+  EVENT_WAIT_REQUEST,
+
+  /// @brief Подія виконана
+  EVENT_DONE,
+} EventStatus;
 
 /**
  * @brief Функція читання данних події в підписнику.
