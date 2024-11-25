@@ -94,7 +94,7 @@ typedef struct EventType
 /**
  * @brief Будь яка подія
  */
-#define EVENT_GROUP_ANY() ((EventType){.group = EVENT_GROUP_ANY, .type = EVENT_TYPE_ANY})
+#define EVENT_TYPE() ((EventType){.group = EVENT_GROUP_ANY, .type = EVENT_TYPE_ANY})
 
 /**
  * @brief Структура яка містить дані для відправки підписнику, та/або функцію яка дозволить прочитати вхідні данні
@@ -118,7 +118,6 @@ struct EventOutputReturnData
   size_t data_size;
 };
 
-
 /**
  * @brief Структура яка містить данні які мають бути повернені пабліщеру (якщо це Request)
  */
@@ -138,5 +137,57 @@ struct Event
   EventOutputData *output_data;
   EventStatus status;
 };
+
+/**
+ * @brief Створює подію "повідомлення".
+ */
+#define CREATE_MESSAGE(EventType, InputData) \
+  ((struct Event){                           \
+      .event_type = EventType,               \
+      .input_data = InputData,               \
+      .output_data = NULL,                   \
+      .status = EVENT_WAIT_QUEUE})
+
+/**
+ * @brief Створює подію "запит" з колбек функцією для обробки "відповіді" запиту, з контекстом для функції.
+ */
+#define CREATE_REQUEST(EventType, InputData, OutputData_CallbackFn, context) \
+  ((struct Event){                                                           \
+      .event_type = EventType,                                               \
+      .input_data = InputData,                                               \
+      .output_data = ((struct EventOutputData){                              \
+          .callback_data = (struct EventOutputCallbackData){                 \
+              .read_fn = OutputData_CallbackFn,                              \
+              .additionalFnValue = context},                                 \
+          .return_data = NULL}),                                             \
+      .status = EVENT_WAIT_QUEUE})
+
+/**
+ * @brief Створює подію "запит" з колбек функцією для обробки "відповіді" запиту.
+ */
+#define CREATE_REQUEST(EventType, InputData, OutputData_CallbackFn) \
+  ((struct Event){                                                  \
+      .event_type = EventType,                                      \
+      .input_data = InputData,                                      \
+      .output_data = ((struct EventOutputData){                     \
+          .callback_data = (struct EventOutputCallbackData){        \
+              .read_fn = OutputData_CallbackFn,                     \
+              .additionalFnValue = NULL},                           \
+          .return_data = NULL}),                                    \
+      .status = EVENT_WAIT_QUEUE})
+
+/**
+ * @brief Створює подію "запит" з читанням відповіді через Await
+ */
+#define CREATE_REQUEST(EventType, InputData)              \
+  ((struct Event){                                        \
+      .event_type = EventType,                            \
+      .input_data = InputData,                            \
+      .output_data = ((struct EventOutputData){           \
+          .callback_data = NULL,                          \
+          .return_data = ((struct EventOutputReturnData){ \
+              .data = NULL,                               \
+              .data_size = -1})}),                        \
+      .status = EVENT_WAIT_QUEUE})
 
 #endif // EVENT_H
