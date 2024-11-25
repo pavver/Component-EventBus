@@ -39,7 +39,7 @@ typedef enum EventStatus : uint8_t
  * @param size - розмір буферу
  * @return розмір данних які залишились для зчитування або -1 у разі помилки
  */
-typedef int (*EventDataReadFn)(void *buffer, size_t size);
+typedef int (*EventDataReadFn)(void *context, void *buffer, size_t size);
 
 /**
  * @brief Функція відправки данних події паблішеру
@@ -96,98 +96,115 @@ typedef struct EventType
  */
 #define EVENT_TYPE() ((EventType){.group = EVENT_GROUP_ANY, .type = EVENT_TYPE_ANY})
 
+typedef struct EventInputCallbackData
+{
+  EventDataReadFn read_fn;
+  void *context;
+} EventInputCallbackData;
+
+typedef struct EventData
+{
+  void *data;
+
+  /**
+   * @brief розмір data в байтах
+   */
+  size_t data_size;
+} EventData;
+
 /**
  * @brief Структура яка містить дані для відправки підписнику, та/або функцію яка дозволить прочитати вхідні данні
  */
-struct EventInputData
+typedef struct EventInputData
 {
-  EventDataReadFn read_fn;
-  void *data;
-  size_t data_size;
-};
+  EventInputCallbackData *callback_data;
+  EventData *return_data;
+} EventInputData;
 
-struct EventOutputCallbackData
+EventInputData *create_event_input_callback(EventDataReadFn fn, void *context)
 {
-  EventDataWriteFn read_fn;
-  void *additionalFnValue;
-};
+  EventInputCallbackData *callback_data_ptr = (EventInputCallbackData *)malloc(sizeof(EventInputCallbackData));
+  callback_data_ptr->read_fn = fn;
+  callback_data_ptr->context = context;
 
-struct EventOutputReturnData
+  EventInputData *data_ptr = (EventInputData *)malloc(sizeof(EventInputData));
+  data_ptr->callback_data = callback_data_ptr;
+  data_ptr->return_data = NULL;
+
+  return EventInputData;
+}
+
+EventInputData *create_event_input_data(char *data)
 {
-  void *data;
-  size_t data_size;
-};
+  return create_event_input_data(data, strlen(data) + 1);
+}
+
+EventInputData *create_event_input_data(void *data, size_t data_size)
+{
+  EventData *ret_data_ptr = (EventData *)malloc(sizeof(EventData));
+  ret_data_ptr->data = data;
+  ret_data_ptr->data_size = data_size;
+
+  EventInputData *data_ptr = (EventInputData *)malloc(sizeof(EventInputData));
+  data_ptr->callback_data = NULL;
+  data_ptr->return_data = data_ptr;
+
+  return data_ptr;
+}
+
+typedef struct EventOutputCallbackData
+{
+  EventDataWriteFn write_fn;
+  void *context;
+} EventOutputCallbackData;
 
 /**
  * @brief Структура яка містить данні які мають бути повернені пабліщеру (якщо це Request)
  */
-struct EventOutputData
+typedef struct EventOutputData
 {
   EventOutputCallbackData *callback_data;
-  EventOutputReturnData *return_data;
-};
+  EventData *return_data;
+} EventOutputData;
 
 /**
  * @brief Структура яка містить данні події
  */
-struct Event
+typedef struct Event
 {
   EventType event_type;
   EventInputData *input_data;
   EventOutputData *output_data;
   EventStatus status;
-};
+} Event;
 
-/**
- * @brief Створює подію "повідомлення".
- */
-#define CREATE_MESSAGE(EventType, InputData) \
-  ((struct Event){                           \
-      .event_type = EventType,               \
-      .input_data = InputData,               \
-      .output_data = NULL,                   \
-      .status = EVENT_WAIT_QUEUE})
+void event_destroy(Event *event)
+{
+  if (event.input_data != NULL)
+  {
+    if (event->input_data.return_data != NULL)
+    {
+      if (event->input_data->return_data.data != NULL)
+        free(event->input_data->return_data.data);
+      free(event->input_data.return_data);
+    }
+    if (event->input_data.callback_data != NULL)
+      free(event->input_data.callback_data);
+    free(event.input_data);
+  }
 
-/**
- * @brief Створює подію "запит" з колбек функцією для обробки "відповіді" запиту, з контекстом для функції.
- */
-#define CREATE_REQUEST(EventType, InputData, OutputData_CallbackFn, context) \
-  ((struct Event){                                                           \
-      .event_type = EventType,                                               \
-      .input_data = InputData,                                               \
-      .output_data = ((struct EventOutputData){                              \
-          .callback_data = (struct EventOutputCallbackData){                 \
-              .read_fn = OutputData_CallbackFn,                              \
-              .additionalFnValue = context},                                 \
-          .return_data = NULL}),                                             \
-      .status = EVENT_WAIT_QUEUE})
-
-/**
- * @brief Створює подію "запит" з колбек функцією для обробки "відповіді" запиту.
- */
-#define CREATE_REQUEST(EventType, InputData, OutputData_CallbackFn) \
-  ((struct Event){                                                  \
-      .event_type = EventType,                                      \
-      .input_data = InputData,                                      \
-      .output_data = ((struct EventOutputData){                     \
-          .callback_data = (struct EventOutputCallbackData){        \
-              .read_fn = OutputData_CallbackFn,                     \
-              .additionalFnValue = NULL},                           \
-          .return_data = NULL}),                                    \
-      .status = EVENT_WAIT_QUEUE})
-
-/**
- * @brief Створює подію "запит" з читанням відповіді через Await
- */
-#define CREATE_REQUEST(EventType, InputData)              \
-  ((struct Event){                                        \
-      .event_type = EventType,                            \
-      .input_data = InputData,                            \
-      .output_data = ((struct EventOutputData){           \
-          .callback_data = NULL,                          \
-          .return_data = ((struct EventOutputReturnData){ \
-              .data = NULL,                               \
-              .data_size = -1})}),                        \
-      .status = EVENT_WAIT_QUEUE})
+  if (event.output_data != NULL)
+  {
+    if (event->output_data.return_data != NULL)
+    {
+      if (event->output_data->return_data.data != NULL)
+        free(event->output_data->return_data.data);
+      free(event->output_data.return_data);
+    }
+    if (event->output_data.callback_data != NULL)
+      free(event->output_data.callback_data);
+    free(event.output_data);
+  }
+}
 
 #endif // EVENT_H
