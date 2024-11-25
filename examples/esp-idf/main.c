@@ -6,6 +6,7 @@
 #define EVENT_WIFI_SUBTYPE_CONNECT 2
 #define EVENT_WIFI_SUBTYPE_DISCONNECTED 3
 #define EVENT_WIFI_SUBTYPE_CHANGE_CONFIG 4
+#define EVENT_WIFI_SUBTYPE_CHANGE_POWEROFF 5
 
 // Простий обробник подій
 event_status_t wifi_event_handler(void *context, void *data, size_t len)
@@ -16,25 +17,16 @@ event_status_t wifi_event_handler(void *context, void *data, size_t len)
 
 void app_main(void)
 {
-  eventbus_configure_t config = {
-      .max_subscribers = 10,
-      .max_events = 10,
-  };
+  eventbus_t *bus = eventbus_create();
 
-  eventbus_t *bus = eventbus_create(config);
+  Subscriber *wifi_subscriber = subscriber_create(EVENT_TYPE(EVENT_TYPE_WIFI), 0, wifi_event_handler);
+  eventbus_subscribe(bus, wifi_subscriber);
 
-  eventbus_subscriber_config_t subscriber_config = {
-      base_type = 0,
-      subtype = 0,
-      callback_context_data = NULL,
-      callback_function = wifi_event_handler,
-  }
-
-  Subscriber *wifi_subscriber = subscriber_create(EVENT_TYPE_WIFI, EVENT_SUBTYPE_ANY, 0, wifi_event_handler);
-  eventbus_register(bus, wifi_subscriber);
-
-  Event *wifi_event = event_create(1, 1, NULL, 0);
+  const char* connect_event_json = ",testssid,password";
+  Event *wifi_event = CREATE_MESSAGE(EVENT_TYPE(EVENT_TYPE_WIFI, EVENT_WIFI_SUBTYPE_CONNECT),);
   eventbus_publish(bus, wifi_event);
+
+
 
   event_destroy(wifi_event);
   subscriber_destroy(wifi_subscriber);
