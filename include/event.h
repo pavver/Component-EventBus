@@ -106,23 +106,36 @@ struct EventInputData
   size_t data_size;
 };
 
-struct event_callback_data
+struct EventOutputCallbackData
 {
-  EventDataReadFn read_fn;
-  void* additionalValue;
+  EventDataWriteFn read_fn;
+  void *additionalFnValue;
+};
+
+struct EventOutputReturnData
+{
   void *data;
   size_t data_size;
 };
 
 
-bool event_is_type(Event *event, event_type type);
-bool event_is_type(Event *event, uint8_t base_type, uint8_t subtype);
+/**
+ * @brief Структура яка містить данні які мають бути повернені пабліщеру (якщо це Request)
+ */
+struct EventOutputData
+{
+  EventOutputCallbackData *callback_data;
+  EventOutputReturnData *return_data;
+};
 
+/**
+ * @brief Структура яка містить данні події
+ */
 struct Event
 {
-  event_type type;
-  event_message_data* message_data;
-  event_callback_data* callback_data;
+  EventType event_type;
+  EventInputData *input_data;
+  EventOutputData *output_data;
   EventStatus status;
 };
 
