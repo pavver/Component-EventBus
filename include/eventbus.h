@@ -38,7 +38,6 @@ int eventbus_publish_message(EventBus *bus, EventType event_type, EventInputData
 
 int eventbus_publish_request(EventBus *bus, EventType event_type);
 int eventbus_publish_request(EventBus *bus, EventType event_type, EventInputData *input_data);
-int eventbus_publish_request(EventBus *bus, EventType event_type, EventInputData *input_data, EventOutputCallbackData *callback);
 
 bool eventbus_request_existResponseData(EventBus *bus, Subscriber *subscriber, Event *event);
 EventData *eventbus_awaitData(EventBus *bus, Subscriber *subscriber, Event *event);

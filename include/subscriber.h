@@ -11,12 +11,12 @@ typedef EventStatus (*SubscriberCallback)(Event *event);
 
 struct Subscriber
 {
-  event_type_t event_type;
+  EventType event_type;
   uint8_t priority;
   SubscriberCallback callback;
 };
 
-Subscriber *subscriber_create(event_type_t event_type, uint8_t priority, SubscriberCallback callback = NULL);
+Subscriber *subscriber_create(EventType event_type, uint8_t priority, SubscriberCallback callback = NULL);
 void subscriber_destroy(Subscriber *subscriber);
 
 #endif // SUBSCRIBER_H
