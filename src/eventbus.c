@@ -59,16 +59,21 @@ EventInputData create_event_input_callback(EventDataReadFn read_fn, EventDataSiz
   return data_ptr;
 }
 
-static int create_event_result_devnull_callback(void *context, void *buffer, size_t size)
+static int create_event_write_devnull_callback(void *context, void *buffer, size_t size)
 {
 }
 
-EventResultData create_event_result_devnull()
+static int create_event_done_devnull_callback(void *context)
 {
-  EventResultData readData;
-  readData.context = NULL;
-  readData.write_fn = create_event_result_devnull_callback;
-  return readData;
+}
+
+EventResultData create_event_result()
+{
+  EventResultData result;
+  result.context = NULL;
+  result.write_fn = create_event_write_devnull_callback;
+  result.done_fn = create_event_done_devnull_callback;
+  return result;
 }
 
 // ==================== Робота з чергою подій ====================

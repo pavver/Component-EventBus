@@ -33,7 +33,7 @@ const char *format_event_type_name(Event *event)
 const char* text = "1234567890";
 
 
-static int publish_callbach(void *context, void *buffer, size_t size)
+static int publish_callback(void *context, void *buffer, size_t size)
 {
 }
 
@@ -46,11 +46,10 @@ void subscriber_handler_A(Event *event, void *context)
 
   EventInputData eventData = create_event_input_str(text);
 
-  EventResultData readData;
-  readData.context = NULL;
-  readData.write_fn = publish_callbach;
+  EventResultData result = create_event_result();
+  result.write_fn = publish_callback;
 
-  eventbus_publish(bus, event_type(EVENT_GROUP_B, EVENT_GROUP_B_TYPE_B), eventData, readData);
+  eventbus_publish(bus, event_type(EVENT_GROUP_B, EVENT_GROUP_B_TYPE_B), eventData, result);
 }
 
 void subscriber_handler_B(Event *event, void *context)
@@ -96,9 +95,9 @@ int main(void)
   EventSubscriber *subscriber_B =
       eventbus_subscribe(bus, event_type(EVENT_GROUP_B, 0), 10, bus, subscriber_handler_B);
 
-  EventResultData readData;
-  readData.context = NULL;
-  readData.write_fn = publish_callbach;
+  EventResultData result = create_event_result();
+  result.context = NULL;
+  result.write_fn = publish_callback;
 
   for (size_t i = 0; i < 1000000; i++)
   {
@@ -108,20 +107,20 @@ int main(void)
     {
       int rnd = rand() % 2;
       EventInputData eventData = create_event_input_str(text);
-      eventbus_publish(bus, event_type(EVENT_GROUP_A, rnd ? EVENT_GROUP_A_TYPE_A : EVENT_GROUP_A_TYPE_B), eventData, readData);
+      eventbus_publish(bus, event_type(EVENT_GROUP_A, rnd ? EVENT_GROUP_A_TYPE_A : EVENT_GROUP_A_TYPE_B), eventData, result);
     }
 
     if (num == 1)
     {
       int rnd = rand() % 2;
       EventInputData eventData = create_event_input_str(text);
-      eventbus_publish(bus, event_type(EVENT_GROUP_B, rnd ? EVENT_GROUP_B_TYPE_A : EVENT_GROUP_B_TYPE_B), eventData, readData);
+      eventbus_publish(bus, event_type(EVENT_GROUP_B, rnd ? EVENT_GROUP_B_TYPE_A : EVENT_GROUP_B_TYPE_B), eventData, result);
     }
 
     if (num == 3)
     {
       EventInputData eventData = create_event_input_str(text);
-      eventbus_publish(bus, event_type(EVENT_GROUP_B, EVENT_GROUP_B_TYPE_B), eventData, readData);
+      eventbus_publish(bus, event_type(EVENT_GROUP_B, EVENT_GROUP_B_TYPE_B), eventData, result);
     }
 
     Sleep(5);

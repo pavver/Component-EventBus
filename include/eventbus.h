@@ -71,6 +71,7 @@ typedef int (*EventDataReadFn)(void *context, void *buffer, size_t size);
  * @return Результат операції.
  */
 typedef int (*EventDataWriteFn)(void *context, void *buffer, size_t size);
+typedef int (*EventDataWriteDoneFn)(void *context);
 
 /**
  * @brief Структура для введення даних події.
@@ -94,8 +95,9 @@ typedef struct
  */
 typedef struct
 {
-  EventDataWriteFn write_fn; /**< Callback для запису даних (результат) */
-  void *context;             /**< Контекст для write_fn */
+  EventDataWriteFn write_fn;    /**< Callback для запису даних (результат) */
+  EventDataWriteDoneFn done_fn; /**< Callback для запису даних (результат) Викликаєтся коли всі підписники уже відпрацювали */
+  void *context;                /**< Контекст для write_fn */
 } EventResultData;
 
 /**
@@ -127,7 +129,7 @@ EventInputData create_event_input_data(void *data, size_t data_size);
 
 EventInputData create_event_input_callback(EventDataReadFn read_fn, EventDataSizeFn size_fn);
 
-EventResultData create_event_result_devnull();
+EventResultData create_event_result();
 
 /**
  * @brief Структура події.
@@ -226,7 +228,7 @@ typedef struct
  */
 int eventbus_init(EventBus *bus, EventBusConfig *cfg);
 
-EventBus * eventbus_create(EventBusConfig cfg);
+EventBus *eventbus_create(EventBusConfig cfg);
 
 /**
  * @brief Зупиняє роботу EventBus та звільняє всі ресурси.

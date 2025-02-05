@@ -51,7 +51,7 @@ int main()
   // Формуємо вхідні дані з стрічки для даних
   EventInputData input2 = create_event_input_str("Test text");
   // Формуємо функцію яка ігнорує результати обробки
-  EventResultData result = create_event_result_devnull();
+  EventResultData result = create_event_result();
   // Публікуємо події типу (1,1)
   eventbus_publish(bus, event_type(1, 1), input1, result);
   eventbus_publish(bus, event_type(1, 1), input2, result);
